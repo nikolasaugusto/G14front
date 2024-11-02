@@ -3,7 +3,6 @@ const saveMateriaBtn = document.getElementById('saveMateriaBtn');
 const deleteMateriaBtn = document.getElementById('deleteMateriaBtn');
 const addAtividadeBtn = document.getElementById('addAtividadeBtn');
 const saveAtividadeBtn = document.getElementById('saveAtividadeBtn');
-//const apiBaseurl = 'http://localhost:5287/api'
 let currentMateriaId = null; // ID da matéria atual
 let currentNotaId = null; // ID da nota atual
 
