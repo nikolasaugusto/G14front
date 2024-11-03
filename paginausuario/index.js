@@ -138,6 +138,7 @@ saveDisciplinaBtn.addEventListener('click', async () => {
             resetModal(); 
             const modal = bootstrap.Modal.getInstance(document.getElementById('disciplinaModal'));
             modal.hide();
+            window.location.reload();
         } catch (error) {
             console.error('Erro ao salvar disciplina:', error);
         }
@@ -360,7 +361,7 @@ function renderTarefas(tarefas) {
 
 async function fetchTarefas() {
     try {
-        const response = await fetch("/api/Tarefas");
+        const response = await fetch("http://localhost:5287/api/Tarefas");
         
         if (!response.ok) {
             throw new Error("Erro ao buscar tarefas");
@@ -387,7 +388,7 @@ async function addTarefa() {
     const tarefaData = { nome, descricao, realizada, usuarioId };
 
     try {
-        const response = await fetch("/api/Tarefas", {
+        const response = await fetch("http://localhost:5287/api/Tarefas", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -403,6 +404,7 @@ async function addTarefa() {
         document.getElementById("tarefaForm").reset();
         fetchTarefas();
         new bootstrap.Modal(document.getElementById("tarefaModal")).hide();
+        window.location.reload();
     } catch (error) {
         console.error("Erro:", error);
     }
@@ -410,7 +412,7 @@ async function addTarefa() {
 
 async function updateTarefa(id, updatedData) {
     try {
-        const response = await fetch(`/api/Tarefas/${id}`, {
+        const response = await fetch(`http://localhost:5287/api/Tarefas/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updatedData)
@@ -428,7 +430,7 @@ async function updateTarefa(id, updatedData) {
 
 async function deleteTarefa(id) {
     try {
-        const response = await fetch(`/api/Tarefas/${id}`, {
+        const response = await fetch(`http://localhost:5287/api/Tarefas/${id}`, {
             method: "DELETE"
         });
 
@@ -453,6 +455,9 @@ document.getElementById("saveTarefaBtn").addEventListener("click", addTarefa);
 
 // Torna a função acessível no escopo global
 window.editDisciplina = editDisciplina;
+
+// Coloca a função deleteTarefa no escopo global
+window.deleteTarefa = deleteTarefa;
 
 // Carrega matérias ao abrir a página
 window.onload = loadDisciplinas;

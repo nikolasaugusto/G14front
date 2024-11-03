@@ -5,7 +5,6 @@ body {
 
 .sidebar {
     width: 250px;
-    background-color: #308b14;
     padding: 20px;
 }
 
@@ -14,11 +13,7 @@ body {
     padding: 20px;
 }
 
-.navbar {
-    background-color: #007bff;
-}
 
 .navbar .btn-user {
     color: black;
-    background-color: aqua;
 }
