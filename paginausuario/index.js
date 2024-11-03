@@ -10,6 +10,8 @@ const saveAtividadeBtn = document.getElementById('saveAtividadeBtn');
 let currentDisciplinaId = null; // ID da disciplina atual
 let currentNotaId = null; // ID da nota atual
 
+
+"---------------------------DISCIPLINAS--------------------------------------------"
 // Função para carregar disciplinas do banco de dados
 async function loadDisciplinas() {
     try {
@@ -64,7 +66,7 @@ updateDisciplinaBtn.addEventListener('click', async () => {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
                 },
                 body: JSON.stringify(disciplina),
             });
@@ -86,7 +88,7 @@ deleteDisciplinaBtn.addEventListener('click', async () => {
             await fetch(`http://localhost:5287/api/Disciplinas/${currentDisciplinaId}`, { 
                 method: 'DELETE',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
                 }
             });
             loadDisciplinas();
@@ -127,13 +129,13 @@ saveDisciplinaBtn.addEventListener('click', async () => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
                 },
                 body: JSON.stringify(disciplina),
             });
 
             loadDisciplinas();
-            resetModal(); // Reseta o modal para o estado inicial
+            resetModal(); 
             const modal = bootstrap.Modal.getInstance(document.getElementById('disciplinaModal'));
             modal.hide();
         } catch (error) {
@@ -142,33 +144,34 @@ saveDisciplinaBtn.addEventListener('click', async () => {
     }
 });
 
-// Função para buscar as informações do usuário logado com base no token JWT
-async function fetchLoggedUser() {
-    try {
-        const response = await fetch(`http://localhost:5287/api/Usuarios/${id}`, { // Exemplo de rota que retorna dados do usuário autenticado
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
-            }
-        });
+"--------------------------FIM-DISCIPLINAS--------------------------------------------"
 
-        if (!response.ok) {
-            throw new Error('Erro na requisição: ' + response.status);
-        }
+// Função para decodificar o token JWT e obter o payload
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+        atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+    );
 
-        const userData = await response.json();
-        
-        // Verifica se `userData` e `userData.id` existem
-        if (userData && userData.id) {
-            return userData;
-        } else {
-            throw new Error("O campo 'id' não foi encontrado na resposta da API.");
-        }
-    } catch (error) {
-        console.error("Erro ao buscar o usuário:", error);
+    return JSON.parse(jsonPayload); 
+}
+
+// Função para obter o ID do usuário logado a partir do token JWT
+function getLoggedUserId() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        console.error('Token JWT não encontrado');
         return null;
     }
+
+    const payload = parseJwt(token); 
+    return payload["nameid"]; 
 }
+
 
 // Evento para preencher o ID do usuário ao abrir o modal
 document.getElementById('editDisciplinaModal').addEventListener('show.bs.modal', async () => {
@@ -178,9 +181,14 @@ document.getElementById('editDisciplinaModal').addEventListener('show.bs.modal',
     }
 });
 
-
-
-
+// Evento para preencher o ID do usuário ao abrir o modal de tarefas
+document.getElementById('tarefaModal').addEventListener('show.bs.modal', () => {
+    const userId = getLoggedUserId();
+    if (userId) {
+        document.getElementById('tarefaUsuarioId').value = userId;
+        document.getElementById('tarefaUsuarioId').disabled = true; // Desativa o campo para evitar edição
+    }
+});
 
 
 // Função para resetar o modal
@@ -191,6 +199,8 @@ function resetModal() {
     deleteDisciplinaBtn.disabled = true; // Desabilita o botão de excluir
 }
 
+
+"---------------------------NOTAS--------------------------------------------"
 // Função para adicionar uma nova nota
 async function adicionarNota() {
     const nome = document.getElementById('notaNome').value;
@@ -325,6 +335,121 @@ async function excluirNota(id) {
         console.error('Erro:', error);
     }
 }
+"--------------------------FIM-NOTAS--------------------------------------------"
+
+"---------------------------TAREFAS--------------------------------------------"
+
+function renderTarefas(tarefas) {
+    const tarefaList = document.getElementById("tarefa-list");
+    tarefaList.innerHTML = ''; // Limpa a lista antes de renderizar
+
+    tarefas.forEach((tarefa) => {
+        const newItem = document.createElement('li');
+        newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+        
+        newItem.innerHTML = `
+            <span>${tarefa.nome}</span>
+            <button class="btn btn-danger btn-sm" onclick="deleteTarefa(${tarefa.id})">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        
+        tarefaList.appendChild(newItem);
+    });
+}
+
+async function fetchTarefas() {
+    try {
+        const response = await fetch("/api/Tarefas");
+        
+        if (!response.ok) {
+            throw new Error("Erro ao buscar tarefas");
+        }
+
+        const tarefas = await response.json();
+        renderTarefas(tarefas);
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+async function addTarefa() {
+    const nome = document.getElementById("tarefaTitulo").value;
+    const descricao = document.getElementById("tarefaDescricao").value;
+    const realizada = document.getElementById("tarefaRealizada").checked;
+    const usuarioId = getLoggedUserId();
+
+    if (!usuarioId) {
+        console.error("Erro: ID do usuário não encontrado.");
+        return;
+    }
+
+    const tarefaData = { nome, descricao, realizada, usuarioId };
+
+    try {
+        const response = await fetch("/api/Tarefas", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("jwtToken")
+            },
+            body: JSON.stringify(tarefaData)
+        });
+
+        if (!response.ok) {
+            throw new Error("Erro ao adicionar tarefa");
+        }
+
+        document.getElementById("tarefaForm").reset();
+        fetchTarefas();
+        new bootstrap.Modal(document.getElementById("tarefaModal")).hide();
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+async function updateTarefa(id, updatedData) {
+    try {
+        const response = await fetch(`/api/Tarefas/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) {
+            throw new Error("Erro ao atualizar tarefa");
+        }
+
+        fetchTarefas(); // Atualiza a lista de tarefas
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+async function deleteTarefa(id) {
+    try {
+        const response = await fetch(`/api/Tarefas/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            throw new Error("Erro ao excluir tarefa");
+        }
+
+        fetchTarefas(); // Atualiza a lista de tarefas
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    fetchTarefas(); // Carrega as tarefas ao iniciar a página
+});
+
+document.getElementById("saveTarefaBtn").addEventListener("click", addTarefa);
+
+"--------------------------FIM-TAREFAS--------------------------------------------"
+
 
 // Torna a função acessível no escopo global
 window.editDisciplina = editDisciplina;
