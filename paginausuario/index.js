@@ -1,156 +1,336 @@
-const materiaList = document.getElementById('materia-list');
-const saveMateriaBtn = document.getElementById('saveMateriaBtn');
-const deleteMateriaBtn = document.getElementById('deleteMateriaBtn');
+document.addEventListener("DOMContentLoaded", () => {
+  // Referências aos elementos HTML
+const disciplinaList = document.getElementById('materia-list'); // Verifique se o ID está correto
+const saveDisciplinaBtn = document.getElementById('saveDisciplinaBtn');
+const deleteDisciplinaBtn = document.getElementById('deleteDisciplinaBtn'); // Mantenha o mesmo ID para o botão de exclusão, se necessário
+const updateDisciplinaBtn = document.getElementById('updateDisciplinaBtn');
+const addNotaBtn = document.getElementById('addNotaBtn');
 const addAtividadeBtn = document.getElementById('addAtividadeBtn');
 const saveAtividadeBtn = document.getElementById('saveAtividadeBtn');
-let currentMateriaId = null; // ID da matéria atual
+let currentDisciplinaId = null; // ID da disciplina atual
 let currentNotaId = null; // ID da nota atual
 
-// Função para carregar matérias e suas notas do banco de dados
-async function loadMaterias() {
+// Função para carregar disciplinas do banco de dados
+async function loadDisciplinas() {
     try {
-        const response = await fetch('http://localhost:5287/api/Disciplinas');
-        const materias = await response.json();
-        renderMaterias(materias);
-    } catch (error) {
-        console.error('Erro ao carregar matérias:', error);
-    }
-}
-
-// Função para renderizar matérias e notas
-function renderMaterias(materias) {
-    materiaList.innerHTML = ''; // Limpar a lista antes de renderizar
-    materias.forEach((materia) => {
-        const newItem = document.createElement('li');
-        newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between');
-        newItem.innerHTML = `<span class="materia-nome">${materia.nome}</span>
-                             <button class="btn" onclick="editMateria(${materia.id})" aria-label="Editar matéria ${materia.nome}">
-                                <i class="bi bi-three-dots-vertical"></i>
-                             </button>`;
-        materiaList.appendChild(newItem);
-    });
-}
-
-// Função para salvar ou atualizar matéria
-saveMateriaBtn.addEventListener('click', async () => {
-    const nome = document.getElementById('materiaNome').value;
-    const valor = document.getElementById('materiaValor').value;
-
-    if (nome && valor) {
-        const materia = { nome, mediaAprovacao: valor };
-
-        try {
-            if (currentMateriaId !== null) {
-                await fetch(`http://localhost:5287/api/Disciplinas${currentMateriaId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(materia),
-                });
-            } else {
-                await fetch('http://localhost:5287/api/Disciplinas', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(materia),
-                });
+        const response = await fetch('http://localhost:5287/api/Disciplinas', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
             }
-
-            loadMaterias();
-            resetModal();
-            const modal = bootstrap.Modal.getInstance(document.getElementById('materiaModal'));
-            modal.hide();
-        } catch (error) {
-            console.error('Erro ao salvar matéria:', error);
-        }
+        });
+        const disciplinas = await response.json();
+        renderDisciplinas(disciplinas);
+    } catch (error) {
+        console.error('Erro ao carregar disciplinas:', error);
     }
-});
+}
 
-// Função para excluir uma matéria
-deleteMateriaBtn.addEventListener('click', async () => {
-    if (currentMateriaId !== null) {
-        try {
-            await fetch(`http://localhost:5287/api/Disciplinas${currentMateriaId}`, { method: 'DELETE' });
-            loadMaterias();
-            resetModal();
-            const modal = bootstrap.Modal.getInstance(document.getElementById('materiaModal'));
-            modal.hide();
-        } catch (error) {
-            console.error('Erro ao excluir matéria:', error);
-        }
-    }
-});
-
-// Função para editar uma matéria
-async function editMateria(id) {
-    currentMateriaId = id;
+// Função para editar uma disciplina
+async function editDisciplina(id) {
+    currentDisciplinaId = id;
 
     try {
-        const response = await fetch(`http://localhost:5287/api/Disciplinas${id}`);
-        const materia = await response.json();
+        const response = await fetch(`http://localhost:5287/api/Disciplinas/${id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
+        const disciplina = await response.json();
 
-        if (materia) {
-            document.getElementById('materiaNome').value = materia.nome;
-            document.getElementById('materiaValor').value = materia.mediaAprovacao;
-            saveMateriaBtn.textContent = "Atualizar Matéria";
-            deleteMateriaBtn.disabled = false;
-            const modal = new bootstrap.Modal(document.getElementById('materiaModal'));
+        if (disciplina) {
+            document.getElementById('editNomeDisciplina').value = disciplina.nome;
+            document.getElementById('editMediaAprovacao').value = disciplina.mediaAprovacao;
+            document.getElementById('editUsuarioId').value = disciplina.usuarioId;
+            document.getElementById('editDisciplinaId').value = disciplina.id; // A ID deve ser preenchida
+            const modal = new bootstrap.Modal(document.getElementById('editDisciplinaModal'));
             modal.show();
         }
     } catch (error) {
-        console.error('Erro ao carregar matéria:', error);
+        console.error('Erro ao carregar disciplina:', error);
     }
 }
+
+// Atualizar disciplina
+updateDisciplinaBtn.addEventListener('click', async () => {
+    const nome = document.getElementById('editNomeDisciplina').value;
+    const mediaAprovacao = document.getElementById('editMediaAprovacao').value;
+    const usuarioId = document.getElementById('editUsuarioId').value;
+
+    if (nome && mediaAprovacao && usuarioId) {
+        const disciplina = { nome, mediaAprovacao, usuarioId };
+
+        try {
+            await fetch(`http://localhost:5287/api/Disciplinas/${currentDisciplinaId}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                },
+                body: JSON.stringify(disciplina),
+            });
+
+            loadDisciplinas();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editDisciplinaModal'));
+            modal.hide();
+        } catch (error) {
+            console.error('Erro ao atualizar disciplina:', error);
+        }
+    }
+});
+
+
+// Excluir disciplina
+deleteDisciplinaBtn.addEventListener('click', async () => {
+    if (currentDisciplinaId !== null) {
+        try {
+            await fetch(`http://localhost:5287/api/Disciplinas/${currentDisciplinaId}`, { 
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                }
+            });
+            loadDisciplinas();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editDisciplinaModal'));
+            modal.hide();
+        } catch (error) {
+            console.error('Erro ao excluir disciplina:', error);
+        }
+    }
+});
+
+// Função para renderizar disciplinas
+function renderDisciplinas(disciplinas) {
+    disciplinaList.innerHTML = ''; // Limpar a lista antes de renderizar
+    disciplinas.forEach((disciplina) => {
+        const newItem = document.createElement('li');
+        newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between');
+        newItem.innerHTML = `<span class="disciplina-nome">${disciplina.nome}</span>
+                             <button class="btn" onclick="editDisciplina(${disciplina.id})" aria-label="Editar disciplina ${disciplina.nome}">
+                                <i class="bi bi-three-dots-vertical"></i>
+                             </button>`;
+        disciplinaList.appendChild(newItem);
+    });
+}
+
+
+// Função para salvar nova disciplina
+saveDisciplinaBtn.addEventListener('click', async () => {
+    const nome = document.getElementById('nomeDisciplina').value;
+    const mediaAprovacao = document.getElementById('mediaAprovacao').value;
+    const usuarioId = document.getElementById('usuarioId').value;
+
+    if (nome && mediaAprovacao && usuarioId) {
+        const disciplina = { nome, mediaAprovacao, usuarioId };
+
+        try {
+            await fetch('http://localhost:5287/api/Disciplinas', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+                },
+                body: JSON.stringify(disciplina),
+            });
+
+            loadDisciplinas();
+            resetModal(); // Reseta o modal para o estado inicial
+            const modal = bootstrap.Modal.getInstance(document.getElementById('disciplinaModal'));
+            modal.hide();
+        } catch (error) {
+            console.error('Erro ao salvar disciplina:', error);
+        }
+    }
+});
+
+// Função para buscar as informações do usuário logado com base no token JWT
+async function fetchLoggedUser() {
+    try {
+        const response = await fetch(`http://localhost:5287/api/Usuarios/${id}`, { // Exemplo de rota que retorna dados do usuário autenticado
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro na requisição: ' + response.status);
+        }
+
+        const userData = await response.json();
+        
+        // Verifica se `userData` e `userData.id` existem
+        if (userData && userData.id) {
+            return userData;
+        } else {
+            throw new Error("O campo 'id' não foi encontrado na resposta da API.");
+        }
+    } catch (error) {
+        console.error("Erro ao buscar o usuário:", error);
+        return null;
+    }
+}
+
+// Evento para preencher o ID do usuário ao abrir o modal
+document.getElementById('editDisciplinaModal').addEventListener('show.bs.modal', async () => {
+    const userData = await fetchLoggedUser();
+    if (userData && userData.id) {
+        document.getElementById('editUsuarioId').value = userData.id;
+    }
+});
+
+
+
+
+
 
 // Função para resetar o modal
 function resetModal() {
-    document.getElementById('materiaNome').value = '';
-    document.getElementById('materiaValor').value = '';
-    saveMateriaBtn.textContent = "Salvar Matéria";
-    deleteMateriaBtn.disabled = true;
-    currentMateriaId = null;
+    document.getElementById('disciplinaForm').reset();
+    currentDisciplinaId = null;
+    saveDisciplinaBtn.textContent = "Salvar";
+    deleteDisciplinaBtn.disabled = true; // Desabilita o botão de excluir
 }
 
-// Função para adicionar atividades
-addAtividadeBtn.addEventListener('click', () => {
-    document.getElementById('atividadeNome').value = '';
-    document.getElementById('atividadeValorTotal').value = '';
-    document.getElementById('atividadeValorNota').value = '';
-    const modal = new bootstrap.Modal(document.getElementById('atividadeModal'));
-    modal.show();
-});
+// Função para adicionar uma nova nota
+async function adicionarNota() {
+    const nome = document.getElementById('notaNome').value;
+    const valorTotal = document.getElementById('notaValorTotal').value;
+    const valorNota = document.getElementById('notaValorNota').value;
 
-// Função para salvar a atividade
-saveAtividadeBtn.addEventListener('click', async () => {
-    const atividadeNome = document.getElementById('atividadeNome').value;
-    const atividadeValorTotal = document.getElementById('atividadeValorTotal').value;
-    const atividadeValorNota = document.getElementById('atividadeValorNota').value;
+    const notaData = {
+        Valor: parseFloat(valorNota),
+        NotaMaxima: parseFloat(valorTotal),
+        DisciplinaId: currentMateriaId,
+        UsuarioId: 1 // Substitua com o ID correto do usuário
+    };
 
-    if (atividadeNome && atividadeValorTotal && atividadeValorNota && currentMateriaId !== null) {
-        const atividade = {
-            nome: atividadeNome,
-            valorTotal: atividadeValorTotal,
-            valorNota: atividadeValorNota,
-        };
+    try {
+        const response = await fetch('http://localhost:5287/api/notas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            },
+            body: JSON.stringify(notaData)
+        });
 
-        try {
-            const response = await fetch(`http://localhost:5287/api/Tarefas`, { // Aqui o bloco de opções deve estar diretamente dentro do fetch()
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(atividade),
-            });
-
-            if (response.ok) {
-                loadMaterias();
-                const modal = bootstrap.Modal.getInstance(document.getElementById('atividadeModal'));
-                modal.hide();
-            }
-        } catch (error) {
-            console.error('Erro ao salvar atividade:', error);
+        if (response.ok) {
+            alert('Nota adicionada com sucesso!');
+            document.getElementById('notaForm').reset();
+            $('#notaModal').modal('hide');
+            carregarNotas(); // Atualiza a lista de notas na página
+        } else {
+            alert('Erro ao adicionar nota. Tente novamente.');
         }
-
+    } catch (error) {
+        console.error('Erro:', error);
     }
+}
+
+// Função para carregar a lista de notas
+async function carregarNotas() {
+    try {
+        const response = await fetch('http://localhost:5287/api/notas', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
+        if (response.ok) {
+            const notas = await response.json();
+            // Exibir as notas na página (implementação adicional necessária)
+            console.log(notas);
+        } else {
+            alert('Erro ao carregar notas.');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// Função para obter detalhes de uma nota específica para edição
+async function carregarNotaPorId(id) {
+    try {
+        const response = await fetch(`http://localhost:5287/api/notas/${id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
+        if (response.ok) {
+            const nota = await response.json();
+            document.getElementById('notaNome').value = nota.Disciplina;
+            document.getElementById('notaValorTotal').value = nota.NotaMaxima;
+            document.getElementById('notaValorNota').value = nota.Valor;
+        } else {
+            alert('Erro ao carregar a nota.');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// Função para atualizar uma nota existente
+async function atualizarNota(id) {
+    const nome = document.getElementById('notaNome').value;
+    const valorTotal = document.getElementById('notaValorTotal').value;
+    const valorNota = document.getElementById('notaValorNota').value;
+
+    const notaData = {
+        Id: id,
+        Valor: parseFloat(valorNota),
+        NotaMaxima: parseFloat(valorTotal),
+        DisciplinaId: currentMateriaId,
+        UsuarioId: 1 // Substitua com o ID correto do usuário
+    };
+
+    try {
+        const response = await fetch(`http://localhost:5287/api/notas/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            },
+            body: JSON.stringify(notaData)
+        });
+
+        if (response.ok) {
+            alert('Nota atualizada com sucesso!');
+            document.getElementById('notaForm').reset();
+            $('#notaModal').modal('hide');
+            carregarNotas(); // Atualiza a lista de notas na página
+        } else {
+            alert('Erro ao atualizar a nota.');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// Função para excluir uma nota
+async function excluirNota(id) {
+    try {
+        const response = await fetch(`http://localhost:5287/api/notas/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
+
+        if (response.ok) {
+            alert('Nota excluída com sucesso!');
+            carregarNotas(); // Atualiza a lista de notas na página
+        } else {
+            alert('Erro ao excluir a nota.');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// Torna a função acessível no escopo global
+window.editDisciplina = editDisciplina;
+
+// Carrega matérias ao abrir a página
+window.onload = loadDisciplinas;
+
 });
 
-// Carregar matérias ao iniciar
-loadMaterias();
