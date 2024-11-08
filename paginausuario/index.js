@@ -340,6 +340,7 @@ async function excluirNota(id) {
 
 "---------------------------TAREFAS--------------------------------------------"
 
+
 function renderTarefas(tarefas) {
     const tarefaList = document.getElementById("tarefa-list");
     tarefaList.innerHTML = ''; // Limpa a lista antes de renderizar
@@ -349,28 +350,46 @@ function renderTarefas(tarefas) {
         newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
         
         newItem.innerHTML = `
-            <span>${tarefa.nome}</span>
+            <input type="checkbox" id="checkbox-${tarefa.id}" onclick="riscarTexto(${tarefa.id})">
+            <span id="texto-${tarefa.id}">${tarefa.nome}</span>
             <button class="btn btn-danger btn-sm" onclick="deleteTarefa(${tarefa.id})">
                 <i class="bi bi-trash"></i>
             </button>
         `;
         
+         // Adiciona o evento de clique para riscar o texto
+        const checkbox = newItem.querySelector(`#checkbox-${tarefa.id}`);
+        checkbox.addEventListener('click', function() {
+        riscarTexto(tarefa.id);
+        });
+        
         tarefaList.appendChild(newItem);
     });
 }
 
-async function fetchTarefas() {
-    try {
-        const response = await fetch("http://localhost:5287/api/Tarefas");
-        
-        if (!response.ok) {
-            throw new Error("Erro ao buscar tarefas");
-        }
+function riscarTexto(id) {
+    const checkbox = document.getElementById(`checkbox-${id}`);
+    const texto = document.getElementById(`texto-${id}`);
 
+    // Verifica o estado do checkbox e risca ou desrisca o texto
+    if (checkbox.checked) {
+        texto.classList.add('text-decoration-line-through');
+    } else {
+        texto.classList.remove('text-decoration-line-through');
+    }
+}
+
+async function loadTarefas() {
+    try {
+        const response = await fetch('http://localhost:5287/api/Tarefas', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') // Adiciona o token de autenticação
+            }
+        });
         const tarefas = await response.json();
         renderTarefas(tarefas);
     } catch (error) {
-        console.error("Erro:", error);
+        console.error('Erro ao carregar tarefas:', error);
     }
 }
 
@@ -444,9 +463,7 @@ async function deleteTarefa(id) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    fetchTarefas(); // Carrega as tarefas ao iniciar a página
-});
+document.addEventListener('DOMContentLoaded', renderTarefas);
 
 document.getElementById("saveTarefaBtn").addEventListener("click", addTarefa);
 
@@ -461,6 +478,8 @@ window.deleteTarefa = deleteTarefa;
 
 // Carrega matérias ao abrir a página
 window.onload = loadDisciplinas;
+
+window.onload = loadTarefas();
 
 });
 

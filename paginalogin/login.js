@@ -22,7 +22,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         // Sucesso no login
         localStorage.setItem("jwtToken", result.jwtToken);
         alert("Login bem-sucedido!");
-        window.location.href = "/paginausuario/index.html"; // Redireciona para a página inicial ou painel
+        window.location.href = "/g14front/paginausuario/index.html"; // Redireciona para a página inicial ou painel
       } else {
         // Exibe a mensagem de erro da API
         errorMessage.textContent = result.message || "Erro ao realizar o login.";
