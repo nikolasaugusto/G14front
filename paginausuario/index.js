@@ -148,8 +148,8 @@ saveDisciplinaBtn.addEventListener('click', async () => {
 "--------------------------FIM-DISCIPLINAS--------------------------------------------"
 
 // Função para decodificar o token JWT e obter o payload
-function parseJwt(token) {
-    const base64Url = token.split('.')[1];
+function parseJwt(jwtToken) {
+    const base64Url = jwtToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
         atob(base64)
@@ -176,7 +176,7 @@ function getLoggedUserId() {
 
 // Evento para preencher o ID do usuário ao abrir o modal
 document.getElementById('editDisciplinaModal').addEventListener('show.bs.modal', async () => {
-    const userData = await fetchLoggedUser();
+    const userData = await getLoggedUserId();
     if (userData && userData.id) {
         document.getElementById('editUsuarioId').value = userData.id;
     }
