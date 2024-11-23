@@ -10,6 +10,10 @@ const saveAtividadeBtn = document.getElementById('saveAtividadeBtn');
 let currentDisciplinaId = null; // ID da disciplina atual
 let currentNotaId = null; // ID da nota atual
 
+document.addEventListener('DOMContentLoaded', () => {
+    renderTarefas(tarefas);
+});
+
 
 "---------------------------DISCIPLINAS--------------------------------------------"
 // Função para carregar disciplinas do banco de dados
@@ -347,7 +351,7 @@ function renderTarefas(tarefas) {
 
     tarefas.forEach((tarefa) => {
         const tarefaItem = document.createElement('li');
-        tarefaItem.className('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+        tarefaItem.className = 'list-group-item d-flex justify-content-between align-items-center';
         
         tarefaItem.innerHTML = `
             <input type="checkbox" id="checkbox-${tarefa.id}" onclick="riscarTexto(${tarefa.id})">
@@ -463,7 +467,7 @@ async function deleteTarefa(id) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', renderTarefas);
+
 
 document.getElementById("saveTarefaBtn").addEventListener("click", addTarefa);
 
