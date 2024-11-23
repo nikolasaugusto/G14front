@@ -104,13 +104,13 @@ deleteDisciplinaBtn.addEventListener('click', async () => {
 function renderDisciplinas(disciplinas) {
     disciplinaList.innerHTML = ''; // Limpar a lista antes de renderizar
     disciplinas.forEach((disciplina) => {
-        const newItem = document.createElement('li');
-        newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between');
-        newItem.innerHTML = `<span class="disciplina-nome">${disciplina.nome}</span>
+        const tarefaItem = document.createElement('li');
+        tarefaItem.classList.add('list-group-item', 'd-flex', 'justify-content-between');
+        tarefaItem.innerHTML = `<span class="disciplina-nome">${disciplina.nome}</span>
                              <button class="btn" onclick="editDisciplina(${disciplina.id})" aria-label="Editar disciplina ${disciplina.nome}">
                                 <i class="bi bi-three-dots-vertical"></i>
                              </button>`;
-        disciplinaList.appendChild(newItem);
+        disciplinaList.appendChild(tarefaItem);
     });
 }
 
@@ -121,8 +121,8 @@ saveDisciplinaBtn.addEventListener('click', async () => {
     const mediaAprovacao = document.getElementById('mediaAprovacao').value;
     const usuarioId = document.getElementById('usuarioId').value;
 
-    if (nome && mediaAprovacao && usuarioId) {
-        const disciplina = { nome, mediaAprovacao, usuarioId };
+    //if (nome && mediaAprovacao && usuarioId) {
+      //  const disciplina = { nome, mediaAprovacao, usuarioId };
 
         try {
             await fetch('http://localhost:5287/api/Disciplinas', {
@@ -142,7 +142,7 @@ saveDisciplinaBtn.addEventListener('click', async () => {
         } catch (error) {
             console.error('Erro ao salvar disciplina:', error);
         }
-    }
+    //}
 });
 
 "--------------------------FIM-DISCIPLINAS--------------------------------------------"
@@ -290,7 +290,7 @@ async function atualizarNota(id) {
         Valor: parseFloat(valorNota),
         NotaMaxima: parseFloat(valorTotal),
         DisciplinaId: currentMateriaId,
-        UsuarioId: 1 // Substitua com o ID correto do usuário
+        UsuarioId: {getLoggedUserId} // Substitua com o ID correto do usuário
     };
 
     try {
@@ -346,10 +346,10 @@ function renderTarefas(tarefas) {
     tarefaList.innerHTML = ''; // Limpa a lista antes de renderizar
 
     tarefas.forEach((tarefa) => {
-        const newItem = document.createElement('li');
-        newItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+        const tarefaItem = document.createElement('li');
+        tarefaItem.className('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
         
-        newItem.innerHTML = `
+        tarefaItem.innerHTML = `
             <input type="checkbox" id="checkbox-${tarefa.id}" onclick="riscarTexto(${tarefa.id})">
             <span id="texto-${tarefa.id}">${tarefa.nome}</span>
             <button class="btn btn-danger btn-sm" onclick="deleteTarefa(${tarefa.id})">
@@ -358,12 +358,12 @@ function renderTarefas(tarefas) {
         `;
         
          // Adiciona o evento de clique para riscar o texto
-        const checkbox = newItem.querySelector(`#checkbox-${tarefa.id}`);
+        const checkbox = tarefaItem.querySelector(`#checkbox-${tarefa.id}`);
         checkbox.addEventListener('click', function() {
         riscarTexto(tarefa.id);
         });
         
-        tarefaList.appendChild(newItem);
+        tarefaList.appendChild(tarefaItem);
     });
 }
 
